@@ -1,5 +1,6 @@
 import gleam/float
 import gleam/int
+import gleam/order
 
 pub type Field(x) {
   Field(
@@ -10,7 +11,19 @@ pub type Field(x) {
     zero: x,
     one: x,
     to_string: fn(x) -> String,
+    int_power: fn(x, Int) -> Result(x, Nil),
   )
+}
+
+fn int_power(base: Int, exp: Int) -> Result(Int, Nil) {
+  case int.compare(exp, 0) {
+    order.Lt -> Error(Nil)
+    order.Eq -> Ok(1)
+    order.Gt -> {
+      let assert Ok(dec) = int_power(base, exp - 1)
+      Ok(base * dec)
+    }
+  }
 }
 
 pub fn int() -> Field(Int) {
@@ -22,6 +35,7 @@ pub fn int() -> Field(Int) {
     zero: 0,
     one: 1,
     to_string: int.to_string,
+    int_power: int_power,
   )
 }
 
@@ -34,5 +48,6 @@ pub fn float() -> Field(Float) {
     zero: 0.0,
     one: 1.0,
     to_string: float.to_string,
+    int_power: fn(base, exp) { float.power(base, int.to_float(exp)) },
   )
 }

@@ -1,5 +1,4 @@
 import field.{type Field}
-import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -119,11 +118,11 @@ pub fn to_string(p: Poly(x), v: String) -> String {
   }
 }
 
-/// Evaluates the real polynomial with the given x value as the variable.
-pub fn eval(p: Poly(Float), v: Float) -> Float {
+/// Evaluates the polynomial with the given x value as the variable.
+pub fn eval(p: Poly(x), v: x) -> x {
   list.index_fold(p.coefficients, p.field.zero, fn(accum, c, i) {
-    case float.power(v, int.to_float(i)) {
-      Ok(value) -> accum +. { c *. value }
+    case p.field.int_power(v, i) {
+      Ok(value) -> p.field.add(accum, p.field.multiply(c, value))
       Error(_) -> accum
     }
   })
