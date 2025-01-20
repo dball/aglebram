@@ -23,13 +23,43 @@ pub type Graph(v) {
   Functional(vertices: Set(v), edger: fn(v) -> Set(v))
 }
 
-pub fn new_materialized(vertices: Dict(v, Set(v))) -> Graph(v) {
-  // TODO enforce invariants
-  Materialized(vertices)
+/// Builds a new materialized graph from the given dictionary of vertices and neighbors.
+/// All edges are assumed to be bidirectional; it is only necessary to declare one side.
+/// All neighbors not found in the keys will be populated as vertices in the graph.
+/// This will error if the vertices contains any self-references.
+pub fn new_materialized(vertices: Dict(v, Set(v))) -> Result(Graph(v), Nil) {
+  let vertices =
+    list.fold_until(dict.to_list(vertices), Ok(vertices), fn(accum, entry) {
+      let #(key, value) = entry
+      case set.contains(value, key) {
+        True -> list.Stop(Error(Nil))
+        False -> {
+          let assert Ok(accum) = accum
+          list.Continue(
+            Ok(
+              set.fold(value, accum, fn(accum, neighbor) {
+                dict.upsert(accum, neighbor, fn(them) {
+                  case them {
+                    None -> set.new() |> set.insert(key)
+                    Some(them) -> set.insert(them, key)
+                  }
+                })
+              }),
+            ),
+          )
+        }
+      }
+    })
+  case vertices {
+    Ok(vertices) -> Ok(Materialized(vertices))
+    Error(Nil) -> Error(Nil)
+  }
 }
 
 pub fn new_functional(vertices: Set(v), edger: fn(v) -> Set(v)) -> Graph(v) {
   // TODO enforce invariants
+  // TODO or maybe just an edger fn that accepts Option(v) and returns the vertices
+  // on None
   Functional(vertices, edger)
 }
 
@@ -85,7 +115,7 @@ pub fn degree(graph: Graph(v), vertex: v) -> Option(Int) {
   }
 }
 
-// Returns the set of vertices directly connected to the given vertex by an edge.
+/// Returns the set of vertices directly connected to the given vertex by an edge.
 pub fn neighbors(graph: Graph(v), vertex: v) -> Option(Set(v)) {
   case graph {
     Materialized(vertices) -> {
@@ -103,6 +133,13 @@ pub fn neighbors(graph: Graph(v), vertex: v) -> Option(Set(v)) {
   }
 }
 
+/// Folds the graph via a breath-first search starting at the given root node,
+/// calling the accumulator fn with the accumulation and the path from the root
+/// to the current node, where the current node is the head and the root is the
+/// tail.
+///
+/// This will not emit cycles, and will visit all vertices accessible from the
+/// root.
 pub fn fold_bfs_from(
   graph: Graph(v),
   root: v,

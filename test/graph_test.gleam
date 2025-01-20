@@ -5,16 +5,12 @@ import gleeunit/should
 import graph
 
 pub fn bfs_fold_test() {
-  let g =
+  let assert Ok(g) =
     graph.new_materialized(
       dict.from_list([
         #("a", set.from_list(["b", "c"])),
-        #("b", set.from_list(["a", "d", "e"])),
-        #("c", set.from_list(["a", "f", "g"])),
-        #("d", set.from_list(["b"])),
-        #("e", set.from_list(["b"])),
-        #("f", set.from_list(["d"])),
-        #("g", set.from_list(["d"])),
+        #("b", set.from_list(["d", "e"])),
+        #("c", set.from_list(["f", "g"])),
       ]),
     )
   graph.fold_bfs_from(g, "a", [], fn(accum, path) {
@@ -37,11 +33,11 @@ pub fn bfs_fold_test() {
   |> list.reverse
   |> should.equal([
     ["g"],
-    ["g", "d"],
-    ["g", "d", "b"],
-    ["g", "d", "b", "a"],
-    ["g", "d", "b", "e"],
-    ["g", "d", "b", "a", "c"],
-    ["g", "d", "b", "a", "c", "f"],
+    ["g", "c"],
+    ["g", "c", "a"],
+    ["g", "c", "f"],
+    ["g", "c", "a", "b"],
+    ["g", "c", "a", "b", "d"],
+    ["g", "c", "a", "b", "e"],
   ])
 }
