@@ -1,4 +1,5 @@
 import gleam/dict.{type Dict}
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/set.{type Set}
 import poly.{type Poly}
@@ -78,18 +79,62 @@ pub fn is_complete(graph: Graph(v)) -> Bool {
 
 /// Returns the number of vertices directly connected to the given vertex by an edge.
 pub fn degree(graph: Graph(v), vertex: v) -> Option(Int) {
+  case neighbors(graph, vertex) {
+    None -> None
+    Some(neighbors) -> Some(set.size(neighbors))
+  }
+}
+
+// Returns the set of vertices directly connected to the given vertex by an edge.
+pub fn neighbors(graph: Graph(v), vertex: v) -> Option(Set(v)) {
   case graph {
     Materialized(vertices) -> {
       case dict.get(vertices, vertex) {
-        Ok(neighbors) -> Some(set.size(neighbors))
+        Ok(neighbors) -> Some(neighbors)
         Error(_) -> None
       }
     }
     Functional(vertices, edger) -> {
       case set.contains(vertices, vertex) {
-        True -> Some(edger(vertex) |> set.size)
+        True -> Some(edger(vertex))
         False -> None
       }
+    }
+  }
+}
+
+pub fn fold_bfs_from(
+  graph: Graph(v),
+  root: v,
+  init: u,
+  with: fn(u, List(v)) -> u,
+) -> u {
+  fold_bfs_loop(graph, init, with, set.new(), [[root]])
+}
+
+fn fold_bfs_loop(
+  graph: Graph(v),
+  accum: u,
+  with: fn(u, List(v)) -> u,
+  visited: Set(v),
+  to_visit: List(List(v)),
+) -> u {
+  case to_visit {
+    [] -> accum
+    [path, ..to_visit_next] -> {
+      let accum = with(accum, path)
+      let assert [head, ..] = path
+      let assert Some(neighbors) = neighbors(graph, head)
+      let next = set.difference(neighbors, visited)
+      let next_paths =
+        set.to_list(next) |> list.map(fn(neighbor) { [neighbor, ..path] })
+      fold_bfs_loop(
+        graph,
+        accum,
+        with,
+        set.insert(visited, head),
+        list.flatten([to_visit_next, next_paths]),
+      )
     }
   }
 }
