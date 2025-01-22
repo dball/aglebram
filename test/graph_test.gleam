@@ -41,3 +41,27 @@ pub fn bfs_fold_test() {
     ["g", "c", "a", "b", "e"],
   ])
 }
+
+pub fn characterize_test() {
+  let t = fn(vs: List(#(String, List(String))), kind: graph.Kind(String)) {
+    let vs = list.map(vs, fn(v) { #(v.0, set.from_list(v.1)) })
+    let assert Ok(g) = graph.new_materialized(dict.from_list(vs))
+    graph.characterize(g) |> should.equal(kind)
+  }
+  t([], graph.Empty)
+  t([#("a", [])], graph.Vertex("a"))
+  t(
+    [#("a", []), #("b", [])],
+    graph.Components(components: {
+      [graph.Vertex("a"), graph.Vertex("b")] |> set.from_list
+    }),
+  )
+  //t(
+  //  [#("a", ["b"]), #("b", ["c"])],
+  //  graph.Path(["a", "b", "c"] |> set.from_list, ["a", "c"] |> set.from_list),
+  //)
+  //t(
+  //  [#("a", ["b"]), #("b", ["c"]), #("c", ["a"])],
+  //  graph.Cycle(["a", "b", "c"] |> set.from_list),
+  //)
+}

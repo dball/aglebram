@@ -176,6 +176,58 @@ fn fold_bfs_loop(
   }
 }
 
+pub type Kind(v) {
+  /// An empty graph.
+  Empty
+  /// A single vertex.
+  Vertex(vertex: v)
+  /// A path graph has a head and tail connected by a sequences of vertices.
+  Path(vertices: Set(v), ends: Set(v))
+  /// A cycle is a list of vertices in a loop.
+  Cycle(vertices: Set(v))
+  /// A tree is a graph with no cycles.
+  Tree(vertices: Set(v))
+  /// A component is a part of a graph disconnected from the remainder.
+  Components(components: Set(Kind(v)))
+  /// A general graph does not fall into any of the other categories; it has at
+  /// least one cycle and does not consist entirely of a cycle, and is entirely
+  /// connected.
+  General
+}
+
+pub fn characterize(graph: Graph(v)) -> Kind(v) {
+  let components = characterize_loop(graph, get_vertices(graph), [])
+  case components {
+    [] -> Empty
+    [component] -> component
+    _ -> Components(components |> set.from_list)
+  }
+}
+
+fn characterize_loop(
+  graph: Graph(v),
+  to_visit: Set(v),
+  components: List(Kind(v)),
+) -> List(Kind(v)) {
+  case set.to_list(to_visit) {
+    [] -> components
+    [vertex, ..to_visit_next] -> {
+      let #(component, visited) = characterize_component(graph, vertex)
+      characterize_loop(
+        graph,
+        set.difference(to_visit_next |> set.from_list, visited),
+        [component, ..components],
+      )
+    }
+  }
+}
+
+/// Walk the graph starting at v, returning the kind of the component and all
+/// vertices visited.
+fn characterize_component(graph: Graph(v), vertex: v) -> #(Kind(v), Set(v)) {
+  #(Vertex(vertex), set.new() |> set.insert(vertex))
+}
+
 pub fn chromatic_polynomial(graph: Graph(v)) -> Poly(Int) {
   todo
 }
