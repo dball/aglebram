@@ -68,4 +68,31 @@ pub fn characterize_test() {
     [#("a", ["b", "c"]), #("b", ["d", "e"]), #("c", ["f", "g"])],
     graph.Tree(vertices: ["a", "b", "c", "d", "e", "f", "g"] |> set.from_list),
   )
+  t(
+    [#("a", ["b", "c"]), #("b", ["d", "e"]), #("c", ["f", "g"]), #("g", ["a"])],
+    graph.General(
+      vertices: ["a", "b", "c", "d", "e", "f", "g"] |> set.from_list,
+    ),
+  )
+  t(
+    [
+      #("a", ["b", "c"]),
+      #("b", ["d", "e"]),
+      #("c", ["f", "g"]),
+      #("x", ["y"]),
+      #("y", ["z"]),
+      #("z", ["x"]),
+      #("h", []),
+    ],
+    graph.Components(components: {
+      [
+        graph.Tree(
+          vertices: ["a", "b", "c", "d", "e", "f", "g"] |> set.from_list,
+        ),
+        graph.Cycle(vertices: ["x", "y", "z"] |> set.from_list),
+        graph.Vertex("h"),
+      ]
+      |> set.from_list
+    }),
+  )
 }

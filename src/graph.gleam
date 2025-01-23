@@ -193,7 +193,7 @@ pub type Kind(v) {
   /// A general graph does not fall into any of the other categories; it has at
   /// least one cycle and does not consist entirely of a cycle, and is entirely
   /// connected.
-  General
+  General(vertices: Set(v))
 }
 
 pub fn characterize(graph: Graph(v)) -> Kind(v) {
@@ -258,7 +258,7 @@ fn characterize_component_loop(
                 }
                 False -> {
                   case cycles {
-                    True -> todo
+                    True -> #(General(vertices), vertices)
                     False -> #(Tree(vertices), vertices)
                   }
                 }
@@ -279,10 +279,15 @@ fn characterize_component_loop(
       let assert Some(neighbors) = neighbors(graph, vertex)
       let visited = dict.keys(edge_counts) |> set.from_list
       let neighbors_to_visit_next = set.difference(neighbors, visited)
-      // TODO we need paths to compute cycles for real
       let cycles = case cycles {
         True -> True
-        False -> set.size(neighbors) != set.size(neighbors_to_visit_next)
+        False -> {
+          case dict.is_empty(edge_counts) {
+            True -> False
+            False ->
+              set.size(neighbors) != set.size(neighbors_to_visit_next) + 1
+          }
+        }
       }
       let edge_counts = dict.insert(edge_counts, vertex, set.size(neighbors))
       let to_visit =
