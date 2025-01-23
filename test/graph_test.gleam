@@ -56,12 +56,16 @@ pub fn characterize_test() {
       [graph.Vertex("a"), graph.Vertex("b")] |> set.from_list
     }),
   )
-  //t(
-  //  [#("a", ["b"]), #("b", ["c"])],
-  //  graph.Path(["a", "b", "c"] |> set.from_list, ["a", "c"] |> set.from_list),
-  //)
-  //t(
-  //  [#("a", ["b"]), #("b", ["c"]), #("c", ["a"])],
-  //  graph.Cycle(["a", "b", "c"] |> set.from_list),
-  //)
+  t(
+    [#("a", ["b"]), #("b", ["c"])],
+    graph.Path(["a", "b", "c"] |> set.from_list, ["a", "c"] |> set.from_list),
+  )
+  t(
+    [#("a", ["b"]), #("b", ["c"]), #("c", ["a"])],
+    graph.Cycle(["a", "b", "c"] |> set.from_list),
+  )
+  t(
+    [#("a", ["b", "c"]), #("b", ["d", "e"]), #("c", ["f", "g"])],
+    graph.Tree(vertices: ["a", "b", "c", "d", "e", "f", "g"] |> set.from_list),
+  )
 }

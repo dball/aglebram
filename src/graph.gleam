@@ -1,4 +1,5 @@
 import gleam/dict.{type Dict}
+import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/set.{type Set}
@@ -225,7 +226,70 @@ fn characterize_loop(
 /// Walk the graph starting at v, returning the kind of the component and all
 /// vertices visited.
 fn characterize_component(graph: Graph(v), vertex: v) -> #(Kind(v), Set(v)) {
-  #(Vertex(vertex), set.new() |> set.insert(vertex))
+  characterize_component_loop(graph, dict.new(), False, [vertex])
+}
+
+fn characterize_component_loop(
+  graph: Graph(v),
+  edge_counts: Dict(v, Int),
+  cycles: Bool,
+  to_visit: List(v),
+) {
+  case to_visit {
+    [] -> {
+      let visited = dict.keys(edge_counts)
+      let vertices = set.from_list(visited)
+      case visited {
+        [vertex] -> #(Vertex(vertex), vertices)
+        _ -> {
+          let edges_freqs = dict.values(edge_counts) |> list.sort(int.compare)
+          case edges_freqs {
+            [1, 1, ..rest] -> {
+              case list.all(rest, fn(n) { n == 2 }) {
+                True -> {
+                  let ends =
+                    dict.fold(edge_counts, set.new(), fn(accum, vertex, count) {
+                      case count {
+                        1 -> accum |> set.insert(vertex)
+                        _ -> accum
+                      }
+                    })
+                  #(Path(vertices, ends), vertices)
+                }
+                False -> {
+                  case cycles {
+                    True -> todo
+                    False -> #(Tree(vertices), vertices)
+                  }
+                }
+              }
+            }
+            [2, ..rest] -> {
+              case list.all(rest, fn(n) { n == 2 }) {
+                True -> #(Cycle(vertices), vertices)
+                False -> todo
+              }
+            }
+            _ -> todo
+          }
+        }
+      }
+    }
+    [vertex, ..to_visit_next] -> {
+      let assert Some(neighbors) = neighbors(graph, vertex)
+      let visited = dict.keys(edge_counts) |> set.from_list
+      let neighbors_to_visit_next = set.difference(neighbors, visited)
+      // TODO we need paths to compute cycles for real
+      let cycles = case cycles {
+        True -> True
+        False -> set.size(neighbors) != set.size(neighbors_to_visit_next)
+      }
+      let edge_counts = dict.insert(edge_counts, vertex, set.size(neighbors))
+      let to_visit =
+        list.flatten([to_visit_next, neighbors_to_visit_next |> set.to_list])
+      characterize_component_loop(graph, edge_counts, cycles, to_visit)
+    }
+  }
 }
 
 pub fn chromatic_polynomial(graph: Graph(v)) -> Poly(Int) {
