@@ -1,8 +1,10 @@
+import field
 import gleam/dict
 import gleam/list
 import gleam/set
 import gleeunit/should
 import graph
+import poly
 
 pub fn bfs_fold_test() {
   let assert Ok(g) =
@@ -95,4 +97,27 @@ pub fn characterize_test() {
       |> set.from_list
     }),
   )
+}
+
+pub fn chromatic_polynomial_test() {
+  let t = fn(vs: List(#(String, List(String))), expr: List(Int)) {
+    let vs = list.map(vs, fn(v) { #(v.0, set.from_list(v.1)) })
+    let assert Ok(g) = graph.new_materialized(dict.from_list(vs))
+    graph.chromatic_polynomial(g) |> should.equal(poly.new(field.int(), expr))
+  }
+  //t([], poly.new(field.int(), []))
+  t([#("a", [])], [0, 1])
+  t([#("a", []), #("b", [])], [0, 0, 1])
+  t([#("a", ["b"]), #("b", ["c"])], [0, 1, -2, 1])
+  t([#("a", ["b"]), #("b", ["c"]), #("c", ["a"])], [0, 2, -3, 1])
+  t([#("a", ["b", "c"]), #("b", ["d"])], [0, -1, 3, -3, 1])
+  // TODO complete graph
+  // TODO the general graph, by delete-contract
+  // t(
+  //   [#("a", ["b", "c"]), #("b", ["d", "e"]), #("c", ["f", "g"]), #("g", ["a"])],
+  //   graph.General(
+  //     vertices: ["a", "b", "c", "d", "e", "f", "g"] |> set.from_list,
+  //   ),
+  // )
+  //)
 }

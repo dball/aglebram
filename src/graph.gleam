@@ -1,7 +1,9 @@
+import field
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/result
 import gleam/set.{type Set}
 import poly.{type Poly}
 
@@ -298,5 +300,41 @@ fn characterize_component_loop(
 }
 
 pub fn chromatic_polynomial(graph: Graph(v)) -> Poly(Int) {
-  todo
+  chromatic_polynomial_kind(characterize(graph))
+}
+
+fn chromatic_polynomial_kind(kind: Kind(v)) -> Poly(Int) {
+  let p = poly.new(field.int(), _)
+  case kind {
+    Vertex(_) -> p([0, 1])
+    Path(vertices, _) -> {
+      let n = set.size(vertices)
+      let terms = [[0, 1], ..list.repeat([-1, 1], n - 1)]
+      terms |> list.map(p) |> list.reduce(poly.multiply) |> result.unwrap(p([]))
+    }
+    Tree(vertices) -> {
+      let n = set.size(vertices)
+      let terms = [[0, 1], ..list.repeat([-1, 1], n - 1)]
+      terms |> list.map(p) |> list.reduce(poly.multiply) |> result.unwrap(p([]))
+    }
+    Cycle(vertices) -> {
+      let n = set.size(vertices)
+      let most =
+        list.repeat(p([-1, 1]), n)
+        |> list.reduce(poly.multiply)
+        |> result.unwrap(p([]))
+      let last =
+        [p([-1, 1]), ..list.repeat(p([-1]), n)]
+        |> list.reduce(poly.multiply)
+        |> result.unwrap(p([]))
+      poly.add(most, last)
+    }
+    Components(components) ->
+      components
+      |> set.to_list
+      |> list.map(chromatic_polynomial_kind)
+      |> list.reduce(poly.multiply)
+      |> result.unwrap(p([]))
+    _ -> todo
+  }
 }
