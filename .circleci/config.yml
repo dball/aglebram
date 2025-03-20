@@ -1,0 +1,22 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/elixir:1.18.2-erlang-26.2.1-node
+    steps:
+      - run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      - run: test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+      - run: test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      - run: echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bashrc
+      - run: source ~/.bashrc
+      - run: brew install gleam
+      - checkout
+      - run: gleam deps download
+      - run: gleam test
+      - run: gleam format --check src test
+
+workflows:
+  build-and-test:
+    jobs:
+      - build
