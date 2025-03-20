@@ -1,0 +1,23 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/elixir:1.18.2-erlang-26.2.1-node
+    steps:
+      - run:
+          command: |
+            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            echo >> /home/circleci/.profile
+            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/circleci/.profile
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            brew install gleam
+      - checkout
+      - run: /home/linuxbrew/.linuxbrew/bin/gleam deps download
+      - run: /home/linuxbrew/.linuxbrew/bin/gleam test
+      - run: /home/linuxbrew/.linuxbrew/bin/gleam format --check src test
+
+workflows:
+  build-and-test:
+    jobs:
+      - build
