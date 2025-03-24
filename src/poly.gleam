@@ -140,13 +140,10 @@ fn single_term(points: List(Point), point: Point) -> Poly(Float) {
       False ->
         multiply(
           accum,
-          Poly(
-            ..accum,
-            coefficients: [
-              { 0.0 -. p.x } /. { point.x -. p.x },
-              1.0 /. { point.x -. p.x },
-            ],
-          ),
+          Poly(..accum, coefficients: [
+            { 0.0 -. p.x } /. { point.x -. p.x },
+            1.0 /. { point.x -. p.x },
+          ]),
         )
     }
   })
