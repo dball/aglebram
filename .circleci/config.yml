@@ -4,7 +4,11 @@ jobs:
   build:
     docker:
       - image: cimg/elixir:1.18.2-erlang-26.2.1-node
+    resource_class: small
     steps:
+      - checkout
+      - restore_cache:
+          key: gleam-toml{{ checksum "gleam.toml" }}
       - run:
           command: |
             NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -12,11 +16,14 @@ jobs:
             echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/circleci/.profile
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
             brew install gleam
-      - checkout
       - run: /home/linuxbrew/.linuxbrew/bin/gleam deps download
+      - save_cache:
+          key: gleam-toml{{ checksum "gleam.toml" }}
+          paths:
+            - /home/linuxbrew
+            - build
       - run: /home/linuxbrew/.linuxbrew/bin/gleam test
       - run: /home/linuxbrew/.linuxbrew/bin/gleam format --check src test
-
 workflows:
   build-and-test:
     jobs:
