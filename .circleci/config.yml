@@ -10,12 +10,16 @@ jobs:
       - restore_cache:
           key: gleam-toml{{ checksum "gleam.toml" }}
       - run:
+          environment:
+              NONINTERACTIVE: "1"
           command: |
-            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            echo >> /home/circleci/.profile
-            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/circleci/.profile
-            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-            brew install gleam
+            if [ ! -r /home/linuxbrew ]; then
+              /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+              echo >> /home/circleci/.profile
+              echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/circleci/.profile
+              eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+              brew install gleam
+            fi
       - run: /home/linuxbrew/.linuxbrew/bin/gleam deps download
       - save_cache:
           key: gleam-toml{{ checksum "gleam.toml" }}
