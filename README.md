@@ -1,5 +1,7 @@
 # aglebram
 
+Just some goofy math code.
+
 [![Package Version](https://img.shields.io/hexpm/v/aglebram)](https://hex.pm/packages/aglebram)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/aglebram/)
 
